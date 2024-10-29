@@ -14,7 +14,7 @@ type Subscriber struct {
 	messages chan *Message
 	topics   map[string]bool
 	active   bool
-	mutex    sync.RWMutex
+	mu       sync.RWMutex
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,8 +42,8 @@ func NewSubscriber() (string, *Subscriber) {
 
 // AddTopic adds a topic to the subscriber's list of topics
 func (s *Subscriber) AddTopic(topic string) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	s.topics[topic] = true
 }
@@ -52,8 +52,8 @@ func (s *Subscriber) AddTopic(topic string) {
 
 // RemoveTopic removes a topic from the subscriber's list of topics
 func (s *Subscriber) RemoveTopic(topic string) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	delete(s.topics, topic)
 }
@@ -62,8 +62,8 @@ func (s *Subscriber) RemoveTopic(topic string) {
 
 // Signal pushes a message to the subscriber's message channel
 func (s *Subscriber) Signal(message *Message) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	if s.active {
 		s.messages <- message
@@ -74,8 +74,8 @@ func (s *Subscriber) Signal(message *Message) {
 
 // Close closes the subscriber's message channel
 func (s *Subscriber) Close() {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	s.active = false
 	close(s.messages)

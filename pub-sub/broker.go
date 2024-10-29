@@ -14,7 +14,7 @@ type Subscribers map[string]*Subscriber
 // Broker represents a broker
 type Broker struct {
 	topics map[string]Subscribers
-	mutex  sync.RWMutex
+	mu     sync.RWMutex
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,8 +31,8 @@ func NewBroker() *Broker {
 // Subscribe adds a subscriber to the broker's list of subscribers for a given topic. It then adds
 // the topic to the subscriber's list of topics
 func (b *Broker) Subscribe(s *Subscriber, topic string) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
 	if b.topics[topic] == nil {
 		b.topics[topic] = make(Subscribers)
@@ -49,8 +49,8 @@ func (b *Broker) Subscribe(s *Subscriber, topic string) {
 // Unsubscribe removes a subscriber from the broker's list of subscribers for a given topic. It
 // then removes the topic from the subscriber's list of topics
 func (b *Broker) Unsubscribe(s *Subscriber, topic string) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
 	if b.topics[topic] == nil {
 		return
@@ -64,9 +64,9 @@ func (b *Broker) Unsubscribe(s *Subscriber, topic string) {
 
 // Publish sends a message to all subscribers of a given topic
 func (b *Broker) Publish(topic string, message string) {
-	b.mutex.RLock()
+	b.mu.RLock()
 	bTopics := b.topics[topic]
-	b.mutex.RUnlock()
+	b.mu.RUnlock()
 
 	for _, s := range bTopics {
 		m := NewMessage(message, topic)
